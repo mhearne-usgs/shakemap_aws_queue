@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2020-08-12T15:24:49.287Z" agent="5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 Edg/84.0.522.59" etag="8h7OYvRsGoD_sS6L1VHm" version="13.6.2" type="github">
+<mxfile host="app.diagrams.net" modified="2020-08-12T15:50:24.041Z" agent="5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 Edg/84.0.522.59" etag="FrXVB8n-ZWNyR02I_Pn0" version="13.6.2" type="github">
   <diagram id="ZtYG9Sx7cP-IKcmzflR8" name="Page-1">
     <mxGraphModel dx="996" dy="693" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -58,13 +58,13 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="Xdjex0H8esJp2T3BDwvE-2" value="" style="group" parent="1" vertex="1" connectable="0">
-          <mxGeometry x="575" y="159" width="140" height="80" as="geometry" />
+          <mxGeometry x="575" y="150.5" width="140" height="99" as="geometry" />
         </mxCell>
         <mxCell id="Xdjex0H8esJp2T3BDwvE-3" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="Xdjex0H8esJp2T3BDwvE-2" vertex="1">
-          <mxGeometry width="140" height="80" as="geometry" />
+          <mxGeometry width="140" height="99" as="geometry" />
         </mxCell>
-        <mxCell id="Xdjex0H8esJp2T3BDwvE-4" value="Write event.xml to S3" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="Xdjex0H8esJp2T3BDwvE-2" vertex="1">
-          <mxGeometry x="50" y="30" width="40" height="20" as="geometry" />
+        <mxCell id="Xdjex0H8esJp2T3BDwvE-4" value="Write event.xml to S3/copy files from previous version" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="Xdjex0H8esJp2T3BDwvE-2" vertex="1">
+          <mxGeometry x="50" y="37.125" width="40" height="24.75" as="geometry" />
         </mxCell>
         <mxCell id="Xdjex0H8esJp2T3BDwvE-5" value="" style="group" parent="1" vertex="1" connectable="0">
           <mxGeometry x="505" y="310" width="60" height="80" as="geometry" />
@@ -411,10 +411,10 @@
         </mxCell>
         <mxCell id="1NO3vYuAgstss5tLDtMF-19" value="" style="endArrow=classic;html=1;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" target="1NO3vYuAgstss5tLDtMF-13">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="180" y="730" as="sourcePoint" />
+            <mxPoint x="20" y="650" as="sourcePoint" />
             <mxPoint x="425" y="156" as="targetPoint" />
             <Array as="points">
-              <mxPoint x="10" y="620" />
+              <mxPoint x="10" y="650" />
               <mxPoint x="10" y="260" />
               <mxPoint x="10" y="140" />
               <mxPoint x="400" y="140" />
@@ -489,7 +489,7 @@
         <mxCell id="1NO3vYuAgstss5tLDtMF-34" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1NO3vYuAgstss5tLDtMF-37">
           <mxGeometry width="140" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="1NO3vYuAgstss5tLDtMF-35" value="Mark event run as sucessful" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1NO3vYuAgstss5tLDtMF-37">
+        <mxCell id="1NO3vYuAgstss5tLDtMF-35" value="Mark event run as successful/failed" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1NO3vYuAgstss5tLDtMF-37">
           <mxGeometry x="50" y="35" width="40" height="20" as="geometry" />
         </mxCell>
         <mxCell id="1NO3vYuAgstss5tLDtMF-42" value="" style="group" vertex="1" connectable="0" parent="1">
