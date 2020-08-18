@@ -1,0 +1,339 @@
+queue:
+########################################################################### 
+# max_process_time : the length of time (in seconds) that queue will 
+#                    wait for a ShakeMap instance to complete; if 
+#                    the processing time exceeds this amount, the 
+#                    row in the running table will be deleted. 
+#                    The default is 600. The 
+#                    value must be >= 0, but should be set generously
+#                    enough so that any automatic run has time to 
+#                    complete.
+#
+# Example:
+#
+#         max_process_time : 300
+#
+###########################################################################     
+    max_process_time: 1200
+
+########################################################################### 
+# max_running : The maximum number of (shake) subprocesses allowed
+#                    to run at the same time. Triggers in excess of this
+#                    mumber will be queued until an existing subprocess
+#                    finishes. Queued events will be run in order of 
+#                    largest magnitude first. Cancellations are not
+#                    queued, they are run immediately. The default is 4.
+#
+# Example:
+#
+#       max_running : 2
+#
+########################################################################### 
+    max_running: 4
+########################################################################### 
+# old_event_age : do not process events whose origin times are greater than
+#                 this long before the present.
+# future_event_age : do not process events whose origin times are greater
+#                    than this long into the future (should be relatively
+#                    short).
+# The default is to process all events regardless of age.
+#
+# The age format is a positive integer followed by a suffix of "y" (years),
+# "d" (days), or "m" (minutes).
+#
+# Example:
+#
+#       old_event_age : 1y
+#       future_event_age : 5m
+#
+########################################################################### 
+    old_event_age : 1y
+    future_event_age : 5m
+
+###########################################################################
+# minmag: The minimum magnitude an event must achieve to be processed;
+#         the default is 4.0; this value can be overridden if the event
+#         falls within one of the "box" regions (specified below)
+#
+# Example:
+#
+# minmag : 4.0
+#
+###########################################################################
+    minmag : 5.4
+
+###########################################################################
+# max_trigger_wait: If a trigger is received and:
+#    a) the event is currently being run, it is scheduled to be rerun
+#       no later than "max_trigger_wait" in the future; or
+#    b) the event is due for a repeat no later than "max_trigger_wait"
+#       in the future, then the trigger is "shelved" until the scheduled
+#       repeat; or
+#    c) the event was run no earlier than "max_trigger_wait" in the past,
+#       it is scheduled to be run "max_trigger_wait" in the future
+#
+# The purpose of this parameter is to prevent the event from being rerun
+# too often when many triggers are anticipated, but to make sure that the
+# event is rerun in a timely fashion in response to changes in the origin,
+# available data, etc. It should be a fairly short period; 5m is the default.
+#
+# The format is is a positive integer (minutes) appended with "m", "h", "d", 
+# or "y" (minutes, hours, days, or years). 0 (zero) is an acceptable value
+# and will result in the trigger being honored as soon as possible.
+#
+# Example:
+#
+#   max_trigger_wait : 10m
+#
+###########################################################################
+    max_trigger_wait: 10m
+
+###########################################################################
+# boxes: "Metro boxes" (polygons, really) within which the magnitude "mag"
+#        supersedes "minmag" (above); multiple boxes are allowed; if the 
+#        boxes overlap, the first one encountered will be used; boxes are
+#        optional, the default is to have no metro boxes.
+#
+#        NOTE: The order the boxes are searched is lexicographic. Therefore
+#        you may wish to start them with a number (as in the example below),
+#        or otherwise name them in a way that will guarantee they are 
+#        searched in the order you intend.
+#
+#        Statement format:
+#
+#          box_name : '''mag, lat1, lon1, ... latN, lonN'''
+#
+#        The last coordinate is assumed to connect to the first. The
+#        entire list must be enclosed in triple quotes. The list
+#        may be broken onto several lines.
+#
+# Example:
+#
+# [polygons]
+#     01_my_box : '''3.5,
+#              33.50, -116.75,
+#              33.50, -118.25,
+#              34.33, -120.25,
+#              34.75, -120.25,
+#              34.75, -116.75'''
+#     02_my_box2 : '''3.8,
+#               34.50, -117.75,
+#               34.50, -119.25,
+#               34.33, -121.25,
+#               34.75, -121.25,
+#               34.75, -117.75'''
+#
+# In this example, 01_my_box will be searched before 02_my_box2 because
+# the order of searching is lexicographic.
+###########################################################################
+    polygons:
+    - name: hv
+      magnitude: 3.39
+      polygon: "18.3962, -154.4897,
+                19.8494, -153.7427,
+                22.0856, -156.7969,
+                23.3019, -159.8950,
+                22.0042, -161.6968,
+                20.1385, -159.1040,
+                18.3128, -156.3574,
+                18.3962, -154.4897"
+
+    - name: ak1
+      magnitude: 2.99
+      polygon: "60.0, -151.0,
+                60.0, -149.0,
+                62.0, -149.0,
+                62.0, -151.0"
+
+    - name: ak2
+      magnitude: 3.99
+      polygon: "59.0, -152.0,
+                59.0, -148.0,
+                63.0, -148.0,
+                63.0, -152.0"
+
+    - name: ci
+      magnitude: 3.39
+      polygon: "37.4300, -117.7600,
+                34.5000, -121.2500,
+                31.5000, -118.5000,
+                31.5000, -114.0000,
+                34.5000, -114.0000,
+                37.4300, -117.7600"
+
+    - name: nc
+      magnitude: 3.39
+      polygon: "34.5000, -121.2500,
+                37.4300, -117.7600,
+                39.0000, -120.0000,
+                42.0000, -120.0000,
+                42.0000, -125.0000,
+                42.0000, -126.0000,
+                40.0000, -126.0000,
+                34.5000, -121.2500"
+
+    - name: nn
+      magnitude: 2.99
+      polygon: "34.5000, -114.0000,
+                37.4300, -117.7600,
+                39.0000, -120.0000,
+                42.0000, -120.0000,
+                42.0000, -114.2500,
+                36.7500, -114.2500,
+                36.7500, -114.0000,
+                34.5000, -114.0000"
+
+    - name: uu 
+      magnitude: 2.99
+      polygon: "36.7500, -108.7500,
+                36.7500, -114.2500,
+                42.5000, -114.2500,
+                42.5000, -108.7500,
+                36.7500, -108.7500"
+
+    - name: uw
+      magnitude: 3.39
+      polygon: "43.0200, -125.0000,
+                42.0000, -125.0000,
+                42.0000, -120.0000,
+                42.0000, -117.0000,
+                49.0000, -117.0000,
+                48.9500, -123.3000,
+                48.3000, -123.4000,
+                48.5000, -125.0000,
+                44.5000, -124.6000,
+                43.0200, -125.0000"
+
+    - name: mb
+      magnitude: 3.39
+      polygon: "45.1667, -110.0000,
+                45.1667, -111.3333,
+                44.5000, -111.3333,
+                44.5000, -113.0000,
+                47.9500, -116.0500,
+                48.5000, -115.0000,
+                48.5000, -113.0000,
+                46.0000, -109.5000,
+                45.1667, -109.5000,
+                45.1667, -110.0000"
+
+    - name: cus
+      magnitude: 3.49
+      polygon: "49.0000, -89.8242,
+                45.5833, -80.5078,
+                47.7541, -72.9492,
+                48.6910, -64.5117,
+                46.1950, -63.6328,
+                37.7186, -69.2578,
+                31.5036, -76.6406,
+                24.0465, -79.6289,
+                24.8466, -96.5918,
+                30.4487, -107.7539,
+                31.5000, -114.0000,
+                31.5000, -118.5000,
+                34.5000, -121.2500,
+                40.0000, -126.0000,
+                42.0000, -126.0000,
+                42.0000, -125.0000,
+                43.0000, -125.0000,
+                44.5000, -124.6000,
+                48.5000, -125.0000,
+                48.3000, -123.4000,
+                48.9500, -123.3000,
+                49.0000, -117.0000,
+                49.0000, -89.8242"
+
+    - name: pr
+      magnitude: 3.39
+      polygon: "18.70, -67.43,
+                18.70, -65.42,
+                17.73, -65.42,
+                17.73, -67.43,
+                18.70, -67.43"
+
+    - name: nz
+      magnitude: 4.89
+      polygon: "-33.83717771008569, 172.0377716900371,
+                -45.46062803681616, 165.3799459030082,
+                -47.33568374266704, 166.5465375421417,
+                -47.99066401262819, 168.8965248040223,
+                -43.45489112707823, 175.9227437569118,
+                -38.17491133266925, 180.1225601057868,
+                -33.46716026272006, 173.4650154253113,
+                -33.83717771008569, 172.0377716900371"
+
+###########################################################################
+# repeats: Set up a schedule of re-runs for events of varying sizes; each
+#          line has the form:
+#
+#           min_mag : t1, t2, ... tN
+#
+#          where the tn's are delays (from the event origin time) at 
+#          which events of magnitude greater than or equal to "min_mag" will
+#          be re-run; the repeat line with the highest magnitude takes 
+#          precedence; the default (i.e. no repeat lines are given) is 
+#          to not rerun events; the tn's may take one of the following forms:
+#
+#            <int>
+#            <int>m
+#            <int>h
+#            <int>d
+#            <int>y
+#
+#       Where '<int>' is a positive integer, no suffix or a suffix
+#       of 'm' indicates minutes, a suffix 'h' means hours, a suffix
+#       'd' means days, and a suffix of 'y' means years.
+#
+# Example
+# To set up the following schedule:
+#
+#           0.0 <= Mag  < 4.5       : 15, 30 min
+#           4.5 <= Mag  < 6.0       : 5, 15, 30 min
+#           6.0 <= Mag  < oo        : 5, 15, 30, 60 min
+#
+# use:
+#
+#       [repeats]
+#           0.0 : 15, 30
+#           4.5 : 5, 15, 30
+#           6.0 : 5, 15, 30, 1h
+###########################################################################
+    repeats:
+        - mag: 0.0
+          times: "2h, 1d"
+
+###########################################################################
+# network_delays: Delay running events from specified networks for a 
+#                 specified time after the origin time. This is useful,
+#                 for example, to allow time for ground motion data to
+#                 arrive before running the event. Each network is
+#                 specified separately using the following form:
+#
+#                 netid : delay
+#
+#                 where netid is the network's ID, and delay is a time
+#                 specified as described above in the 'repeats' section.
+#                 The network ID must match exactly the ID in the 
+#                 event/origin structure sent to the queue.
+# 
+# Example
+# The line:
+#
+#           ci : 5m
+#
+# will delay running events from the 'ci' network for 5 minutes after the
+# origin time.
+###########################################################################
+    network_delays:
+    - network: ci
+      delay: 8m
+    - network: nc
+      delay: 8m
+    - network: pn
+      delay: 8m
+    - network: ak
+      delay: 8m
+    - network: uu
+      delay: 8m
+    - network: hv
+      delay: 8m

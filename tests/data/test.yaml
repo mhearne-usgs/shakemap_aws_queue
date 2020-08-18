@@ -1,0 +1,17 @@
+queue:
+########################################################################### 
+# max_process_time : the length of time (in seconds) that queue will 
+#                    wait for a ShakeMap instance to complete; if 
+#                    the processing time exceeds this amount, the 
+#                    row in the running table will be deleted. 
+#                    The default is 600. The 
+#                    value must be >= 0, but should be set generously
+#                    enough so that any automatic run has time to 
+#                    complete.
+#
+# Example:
+#
+#         max_process_time : 300
+#
+########################################################################### 
+  max_process_time: 1200
