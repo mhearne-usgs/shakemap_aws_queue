@@ -6,9 +6,12 @@ import tempfile
 import shutil
 from datetime import datetime, timedelta
 from unittest import mock
+import time
 
 from sm_queue.queue_db import (get_session, Event, Queued, Running)
-from sm_queue.queue import get_config, get_polygon, insert_event, run_events
+from sm_queue.queue import (get_config, get_polygon,
+                            insert_event, run_events,
+                            clean_running)
 
 
 def test_config():
@@ -122,6 +125,22 @@ class MockS3Client(object):
         return None
 
 
+class MockEmailClient(object):
+    "Mock boto3 ses client"
+
+    def send_email(self,
+                   Destination=None,
+                   Message=None,
+                   ReplyToAddresses=None,
+                   ReturnPath=None,
+                   ReturnPathArn=None,
+                   Source=None,
+                   SourceArn=None,
+                   ):
+        return {'MessageId': 'EXAMPLE78603177f-7a5433e7-8edb-42ae-af10-f0181f34d6ee-000000',
+                'ResponseMetadata': 'metadata'}
+
+
 def test_run_events():
     queue_file = pathlib.Path(__file__).parent / 'data' / 'queue.yaml'
     queue_url = queue_file.resolve().as_uri()
@@ -145,6 +164,53 @@ def test_run_events():
         insert_event(eventdict)
         with mock.patch('boto3.client', return_value=MockS3Client()) as _:
             run_events()
+
+        # assert that the event is now in the running table
+        session = get_session(dburl)
+        assert session.query(Running).count() == 1
+        session.close()
+
+        # test the cleaning functionality when events have run
+        # over without finishing
+        time.sleep(4)
+        mock_config = {'queue': {'max_process_time': 3,
+                                 'email': {'sender': 'pager@usgs.gov',
+                                           'error_emails': ['foo@outlook.com']}
+                                 },
+                       }
+        mock1 = 'sm_queue.queue.get_config'
+        mock2 = 'boto3.client'
+        with mock.patch(mock1, return_value=mock_config) as _, \
+                mock.patch(mock2, return_value=MockEmailClient()) as _:
+            clean_running()
+
+        # assert that the event is now gone from the running table
+        session = get_session(dburl)
+        assert session.query(Running).count() == 0
+        session.close()
+
+        # TODO: test cleaning functionality when event has successfully
+        # finished running
+        # make sure to test lastrun setting in Event table
+        insert_event(eventdict)
+        with mock.patch('boto3.client', return_value=MockS3Client()) as _:
+            run_events()
+
+        # now find the running event, and set it to be successful
+        session = get_session(dburl)
+        running = session.query(Running).first()
+        running.success = True
+        session.commit()
+
+        # now clean up the successful run
+        with mock.patch(mock1, return_value=mock_config) as _, \
+                mock.patch(mock2, return_value=MockEmailClient()) as _:
+            clean_running()
+
+        assert session.query(Running).count() == 0
+        assert session.query(Event).first().lastrun > datetime(1900, 1, 1)
+        session.close()
+
     except Exception as e:
         msg = f'Something unexpected happened! {str(e)}'
         raise AssertionError(msg)
@@ -194,6 +260,6 @@ def test_queue_objects():
 
 if __name__ == '__main__':
     test_queue_objects()
+    test_config()
     test_run_events()
     test_insert()
-    test_config()

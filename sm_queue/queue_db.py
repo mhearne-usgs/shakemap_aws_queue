@@ -111,6 +111,24 @@ class Event(Base):
         return (datetime.utcnow() - self.time) / timedelta(days=1)
 
     def __init__(self, **kwargs):
+        """Instantiate an Event object from scratch (i.e., not from a query).
+
+        Note: Although keyword arguments, all arguments below must be supplied.
+
+        Args:
+            eventid (str): Event ID of the form "us2020abcd".
+            netid (str): The network code at the beginning of the eventid.
+            time (datetime): Origin time, UTC.
+            lat (float): Origin latitude.
+            lon (float): Origin longitude.
+            depth (float): Origin depth.
+            magnitude (float): Origin magnitude.
+            locstring (str): Description of earthquake location.
+            lastrun (datetime): Set this to something like datetime(1900,1,1).
+
+        Returns:
+            Event: Instance of the Event object.
+        """
         validate_inputs(self.EVENT, kwargs)
 
         for key, value in kwargs.items():
@@ -139,6 +157,17 @@ class Queued(Base):
                                   cascade="all, delete, delete-orphan")
 
     def __init__(self, **kwargs):
+        """Instantiate a Queued object from scratch (i.e., not from a query).
+
+        Note: Although keyword arguments, all arguments below must be supplied.
+
+        Args:
+            event_id (int): ID of an existing (committed) Event object.
+            run_time (datetime): Time (UTC) when event is scheduled to be run.
+
+        Returns:
+            Queued: Instance of the Queued object.
+        """
         validate_inputs(self.QUEUED, kwargs)
 
         for key, value in kwargs.items():
@@ -169,6 +198,18 @@ class Running(Base):
     queued_event = relationship("Queued", back_populates="running_events")
 
     def __init__(self, **kwargs):
+        """Instantiate a Running object from scratch (i.e., not from a query).
+
+        Note: Although keyword arguments, all arguments below must be supplied.
+
+        Args:
+            queued_id (int): ID of an existing (committed) Queued object.
+            start_time (datetime): Time (UTC) when event began running.
+            success (bool): Indicates whether the event has finished running successfully.
+
+        Returns:
+            Running: Instance of the Running object.
+        """
         validate_inputs(self.RUNNING, kwargs)
 
         for key, value in kwargs.items():
@@ -186,6 +227,18 @@ class Running(Base):
 
 
 def validate_inputs(defdict, kwdict):
+    """Validate all init() inputs against the python types of table columns.
+
+    Args:
+        defdict (dict): Dictionary containing the column
+                        names/SQLAlchemy types.
+        kwdict (dict): Dictionary containing the init() kwargs.
+
+    Raises:
+        IncompleteConstructorException: Not all kwargs are set.
+        IncorrectDataTypesException: At least one of the kwargs is
+                                     of the wrong type.
+    """
     # first check that all required parameters are being set
     if not set(defdict.keys()) <= set(kwdict.keys()):
         msg = ('In Event constructor, all the following values must be set:'

@@ -337,3 +337,12 @@ queue:
       delay: 8m
     - network: hv
       delay: 8m
+
+###########################################################################
+# emails: 
+###########################################################################
+    email:
+        error_emails:
+            - mhearne@usgs.gov
+            - mhearne808@yahoo.com
+        sender: pager@usgs.gov

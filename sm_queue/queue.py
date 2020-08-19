@@ -38,7 +38,17 @@ NETWORKS = {'us': 'National Earthquake Information Center',
 
 
 def point_inside_polygon(x, y, poly):
-    # determine if a point is inside a given polygon or not
+    """Determine if a point is inside a given polygon.
+
+    Args:
+        x (float): X coordinate of point.
+        y (float): Y coordinate of point.
+        poly (sequence): Sequence of (x,y) tuples
+
+    Returns:
+        bool: True if point is inside, False if not.
+    """
+    #  or not
     # Polygon is a list of (x,y) pairs.
     # http://www.ariel.com.au/a/python-point-int-poly.html
     n = len(poly)
@@ -94,6 +104,20 @@ def str_to_seconds(tstring):
 
 
 def get_polygon(x, y, config):
+    """Return the polygon dictionary that contains a given X,Y point.
+
+    Args:
+        x (float): Longitude of point.
+        y (float): Latitude of point.
+        config (dict): Result of calling get_config().
+
+    Returns:
+        dict: Dictionary with keys:
+              - name Name of polygon
+              - magnitude Magnitude threshold associated with this polygon
+              - polygon Sequence of (x,y) tuples.
+
+    """
     # return a polygon dictionary or empty dictionary
     for polygon in config['queue']['polygons']:
         if point_inside_polygon(x, y, polygon['polygon']):
@@ -102,6 +126,34 @@ def get_polygon(x, y, config):
 
 
 def get_config():
+    """Return queue config from url indicated by QUEUE_URL env variable.
+
+    Returns:
+        dict: Dictionary containing top level key 'queue', which contains:
+              - max_process_time: Number of seconds allowed for ShakeMaps
+                to complete processing.
+              - max_running: Total number of ShakeMap instances to run
+                simultaneously.
+              - old_event_age: Seconds past which old events will be ignored.
+              - future_event_age: Seconds beyond which events in the future
+                will be ignored.
+              - minmag: Default global magnitude threshold.
+              - max_trigger_wait: Prevents event from being run too often.
+              - polygons: List of dictionaries with fields:
+                          - name: Name of polygon
+                          - magnitude: Magnitude threshold for polygon
+                          - polygon: Sequence of (X,Y) tuples.
+              - repeats: Dictionary with list of dictionaries containing fields:
+                         - mag: Minimum magnitude threshold
+                         - times: Sequence of repeat times in seconds.
+              - network_delays: List of dictionaries containing fields:
+                                - network: Code of network.
+                                - delay: Seconds to delay processing of origins.
+              - emails: Dictionary containing fields:
+                        - error_emails: List of email addresses to receive error messages.
+                        - sender: Sender email address.
+
+    """
     # get the environment variable telling us where our queue config is
     if QUEUE_URL not in os.environ:
         msg = (f"Could not find queue config url "
@@ -158,6 +210,8 @@ def insert_event(eventdict):
                    - depth
                    - magnitude
                    - locstring
+    Returns:
+        bool: True if insert occurred, False if not.
     """
     if DB_URL not in os.environ:
         raise KeyError(f"Database URL {DB_URL} not in environment.")
@@ -182,13 +236,12 @@ def insert_event(eventdict):
         new_time = last_time + dt
         queue = Queued(event_id=eventobj.id, run_time=new_time)
         session.add(queue)
-        new_event = {Event.time: eventdict['time'],
-                     Event.lat: eventdict['latitude'],
-                     Event.lon: eventdict['longitude'],
-                     Event.depth: eventdict['depth'],
-                     Event.magnitude: eventdict['magnitude'],
-                     }
-        session.query(Event).filter(Event.eventid == eid).update(new_event)
+        # modify the event object
+        eventobj.time = eventdict['time']
+        eventobj.lat = eventdict['latitude']
+        eventobj.lon = eventdict['longitude']
+        eventobj.depth = eventdict['depth']
+        eventobj.magnitude = eventdict['magnitude']
         session.commit()
         session.close()
         return True
@@ -242,6 +295,9 @@ def insert_event(eventdict):
 
 
 def clean_running():
+    """Clean running table of events that have finished successfully or hung.
+
+    """
     if DB_URL not in os.environ:
         raise KeyError(f"Database URL {DB_URL} not in environment.")
     db_url = os.environ[DB_URL]
@@ -251,11 +307,11 @@ def clean_running():
     for running in running_events:
         threshold = config['queue']['max_process_time'] / 60
         if running.success:
+            running.queued_event.event.lastrun = datetime.utcnow()
             session.query(Running).\
                 filter(Running.id == running.id).delete()
             session.query(Queued).\
                 filter(Queued.id == running.queued_id).delete()
-
         else:
             if running.minutes_running < threshold:
                 continue
@@ -266,15 +322,52 @@ def clean_running():
                 filter(Running.id == running.id).delete()
             # keep the queued entry so it will run again (?)
             # notify the developers about the problem
-            notify_developers()
+            eventid = running.queued_event.event.eventid
+            notify_developers(eventid)
     session.commit()
 
 
-def notify_developers():
-    return True
+def notify_developers(eventid):
+    """Notify developers about event that has not hung.
+
+    Args:
+        eventid (str): Event ID ('us2020abcd').
+    """
+    config = get_config()
+    run_time = config['queue']['max_process_time'] / 60
+    sender = config['queue']['email']['sender']
+    subject = f'Event {eventid} went past running time'
+    msg = (f'Event {eventid} did not finish in the configured run '
+           f'time ({run_time} minutes).'
+           )
+    addresses = config['queue']['email']['error_emails']
+    client = boto3.client('ses')
+    _ = client.send_email(
+        Source='shake@usgs.gov',
+        Destination={
+            'ToAddresses': addresses,
+        },
+        Message={
+            'Subject': {
+                'Data': subject,
+                'Charset': 'UTF-8'
+            },
+            'Body': {
+                'Text': {
+                    'Data': msg,
+                    'Charset': 'UTF-8'
+                },
+            }
+        },
+        ReplyToAddresses=[
+            sender,
+        ],
+    )
 
 
 def run_events():
+    """Spin up ShakeMap to run events in the queue.
+    """
     if DB_URL not in os.environ:
         raise KeyError(f"Database URL {DB_URL} not in environment.")
     db_url = os.environ[DB_URL]
@@ -308,6 +401,11 @@ def run_events():
 
 
 def write_event_to_s3(event):
+    """Write event.xml file to S3.
+
+    Args:
+        event (Event): SQLAlchemy Event object.
+    """
     eventxml = get_event_xml(event)
     transfer_config = TransferConfig(multipart_threshold=PAYLOAD_LIMIT,
                                      max_concurrency=10,
@@ -326,6 +424,13 @@ def write_event_to_s3(event):
 
 
 def get_event_xml(event):
+    """Return string representation of event object.
+
+    Args:
+        event (Event): SQLAlchemy Event object.
+    Returns:
+        str: XML string.
+    """
     network = ''
     if event.netid in NETWORKS:
         network = NETWORKS[event.netid]
@@ -339,6 +444,11 @@ def get_event_xml(event):
 
 
 def get_bucket():
+    """Get bucket ID.
+
+    Returns:
+        str: Bucket ID suitable for use with boto3.
+    """
     if S3_BUCKET_URL not in os.environ:
         raise KeyError(f"S3 Bucket URL {S3_BUCKET_URL} not in environment.")
     bucket_url = os.getenv('S3_BUCKET_URL')  # this will need to be set
@@ -349,4 +459,12 @@ def get_bucket():
 
 
 def start_shakemap(eventid):
+    """Start ShakeMap instance with eventid.
+
+    Args:
+        eventid (str): Event ID.
+    Returns:
+        bool: True if startup was successful, False if not.
+
+    """
     return True
